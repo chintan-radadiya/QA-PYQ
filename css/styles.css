@@ -23,3 +23,38 @@ body{color:#243647}.topbar{padding:8px 30px;font-size:12px}.brand{font-size:13px
 @media(max-width:1000px){.app-nav{padding:12px 20px}.app-nav .app-logo{width:100%}.dashboard-stats{grid-template-columns:repeat(2,1fr)}.topic-cards{grid-template-columns:repeat(2,1fr)}.hero-progress{min-width:170px}}
 @media(max-width:700px){.wrap{padding:0 15px;margin-top:24px}.topbar{padding:8px 15px}.app-nav{gap:2px;padding:10px 12px}.app-nav a{font-size:12px;padding:8px}.page-heading h1{font-size:27px}.dashboard-stats{gap:10px}.dashboard-stats article{padding:16px}.dashboard-stats strong{font-size:24px}.dashboard-hero{padding:22px;flex-direction:column}.hero-progress{border-left:0;border-top:1px solid #c6e1ef;padding:20px 0 0}.topic-cards{grid-template-columns:1fr}.bank-row{grid-template-columns:35px minmax(0,1fr);padding:14px;gap:12px}.bank-number{width:34px;height:34px;font-size:15px}.bank-row .result-pill{grid-column:2;justify-self:start}.bank-row>span:last-child{display:none}.test-heading>span{display:none}body[data-page=test] .question-sidebar{height:350px}body[data-page=test] .question{padding:18px 4px}body[data-page=test] .option{padding:15px}.dashboard-hero .button{margin-bottom:10px}.section-title{align-items:start}.page-heading p{font-size:14px}}
 .progress-panel #topicList,.progress-panel .legacy-topics,.progress-panel #bookmarksOnlyBtn,.progress-panel #reviseWrongBtn{display:none}.progress-panel .sidebuttons{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* Compact practice workspace: controls remain visible while content scrolls. */
+body[data-page=test]{height:100dvh;overflow:hidden}
+body[data-page=test] .topbar,body[data-page=test] .app-nav{display:none}
+body[data-page=test].practice-menu-open .app-nav{display:flex;position:fixed;top:60px;left:16px;right:16px;z-index:30;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 35px #172a3b25;padding:12px 18px}
+body[data-page=test] .wrap{height:100dvh;max-width:none;margin:0;padding:0 20px 12px}
+body[data-page=test] #testPage{height:100%;display:flex;flex-direction:column;min-height:0}
+body[data-page=test] .test-heading{flex-shrink:0;min-height:60px;margin:0;gap:12px;border-bottom:1px solid #e2edf3;padding:8px 0}
+body[data-page=test] .test-heading button{font-size:12px;padding:7px 10px;white-space:nowrap}
+.practice-title{font-size:15px;margin-right:auto}.practice-title span{color:#7a8b98;font-weight:400;font-size:12px}
+.compact-timer{display:flex;align-items:center;gap:10px;background:#f0f8fc;border:1px solid #d9eaf3;border-radius:8px;padding:5px 8px;font-size:12px;white-space:nowrap}.compact-timer strong{font-variant-numeric:tabular-nums;font-size:15px;margin-left:5px}.compact-timer #timerStatus{font-size:11px;color:#6d7f8d}
+body[data-page=test] .layout{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) 230px;grid-template-rows:minmax(0,1fr);gap:18px;padding-top:12px}
+body[data-page=test] #mainPanel{height:100%;min-height:0;display:flex;flex-direction:column}
+body[data-page=test] .panelhead{padding:8px 10px;flex-shrink:0;gap:8px;font-size:13px}
+body[data-page=test] .panelhead button{padding:6px 9px;font-size:12px}
+body[data-page=test] .tag{font-size:11px;padding:3px 7px}
+body[data-page=test] .question{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px 12px 16px;scrollbar-width:thin}
+body[data-page=test] .qmeta{font-size:11px;margin-bottom:12px;gap:6px}
+body[data-page=test] .qtext{font-size:16px;line-height:1.6}
+body[data-page=test] .options{gap:10px;margin-top:16px}
+body[data-page=test] .option{min-height:50px;padding:10px 14px;gap:10px;border-radius:9px;font-size:14px}
+body[data-page=test] .letter{width:30px;height:30px;border-radius:7px;font-size:16px;margin-right:3px}
+body[data-page=test] .actionbar{flex-shrink:0;padding:10px;gap:8px;background:#fff}
+body[data-page=test] .actionbar button{font-size:12px;padding:7px 10px}
+body[data-page=test] .feedback,body[data-page=test] .answerbox{padding:10px 12px;margin-top:12px;font-size:13px}
+body[data-page=test] .attempt-history{margin-top:10px;font-size:12px}
+body[data-page=test] .response{margin-top:14px}body[data-page=test] .response input{padding:9px}
+body[data-page=test] .question-sidebar{position:static;height:100%;min-height:0;grid-row:1;border-radius:12px}
+body[data-page=test] .navigator-head{padding:14px 18px}
+body[data-page=test] .navigator-head h2{font-size:18px}
+body[data-page=test] .question-sidebar .palette{padding:20px 20px 15px;gap:20px 12px;grid-template-columns:repeat(3,minmax(0,1fr))}
+body[data-page=test] .question-sidebar .pnum{min-height:44px;font-size:18px;padding:7px 0;border-radius:9px}
+body[data-page=test] .pnum .status-badge{width:22px;height:22px;font-size:16px;right:-7px;top:-9px}
+body[data-page=test] .navigator-legend{padding:10px 12px;font-size:10px;gap:7px;grid-template-columns:1fr 1fr}
+@media(max-width:1000px){.compact-timer #timerStatus{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}body[data-page=test] .layout{grid-template-columns:minmax(0,1fr) 200px;gap:12px}.practice-title span{display:none}}
+@media(max-width:700px){body[data-page=test] .wrap{padding:0 8px 8px}body[data-page=test] .test-heading{flex-wrap:wrap;gap:6px;padding:7px 0}.practice-title{font-size:13px}.compact-timer{gap:6px;order:2;flex:1}.compact-timer #timerStatus{position:static;width:auto;height:auto;clip-path:none;white-space:normal;font-size:10px}body[data-page=test] #jumpNavigatorBtn{order:2}body[data-page=test] .layout{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 150px;gap:8px;padding-top:8px}body[data-page=test] .question-sidebar{grid-row:2;grid-column:1;display:grid;grid-template-columns:1fr}body[data-page=test] .navigator-head{padding:5px 12px}body[data-page=test] .navigator-head h2{font-size:13px}body[data-page=test] .question-sidebar .palette{grid-template-columns:repeat(8,minmax(0,1fr));gap:15px 10px;padding:12px}body[data-page=test] .question-sidebar .pnum{min-height:32px;font-size:14px;padding:4px 0}body[data-page=test] .navigator-legend{display:none}body[data-page=test] .qtext{font-size:14px}body[data-page=test] .panelhead{padding:5px}.compact-timer strong{font-size:13px}body[data-page=test] .actionbar{padding:7px 4px}body[data-page=test].practice-menu-open .app-nav{top:54px;left:8px;right:8px}}

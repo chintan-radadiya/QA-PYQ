@@ -22,7 +22,7 @@ console.log('PASS: timers, pause, answered freeze, navigation, grading, revision
 const progress={parentNode:null,remove(){this.parentNode=null;},hidden:false};
 ctx.document.querySelector=()=>progress;
 ctx.document.querySelectorAll=()=>[];
-ctx.document.body={dataset:{}};
+ctx.document.body={dataset:{},classList:{remove(){},toggle(){},contains(){return false}}};
 ctx.window.scrollTo=()=>{};
 ctx.location={hash:'#dashboard'};
 for(const id of ['dashboardPage','resultsPage'])el(id).appendChild=node=>{node.parentNode=el(id)};

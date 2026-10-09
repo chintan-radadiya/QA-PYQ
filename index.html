@@ -8,7 +8,7 @@
 </head>
 <body>
 <header class="topbar"><div class="brand">Arithmetic 1 · CAT QA Practice</div><div class="topright"><span class="topchip" id="topTopic">All topics</span><span>Active time <strong id="totalClock">00:00:00</strong></span></div></header>
-<nav class="app-nav" aria-label="Main navigation"><a class="app-logo" href="#dashboard">A1 <span>Practice studio</span></a><a href="#dashboard">Dashboard</a><a href="#bank">Question bank</a><a href="#topics">Topic practice</a><a href="#random">Random practice</a><a href="#revision">Revision</a><a href="#test">Resume practice</a></nav>
+<nav id="appNavigation" class="app-nav" aria-label="Main navigation"><a class="app-logo" href="#dashboard">A1 <span>Practice studio</span></a><a href="#dashboard">Dashboard</a><a href="#bank">Question bank</a><a href="#topics">Topic practice</a><a href="#random">Random practice</a><a href="#revision">Revision</a><a href="#test">Resume practice</a></nav>
 <main class="wrap">
 <section id="dashboardPage" class="app-page"></section>
 <section id="revisionPage" class="app-page" hidden></section>
@@ -29,10 +29,10 @@
  <label class="shuffle-label"><input id="shuffleSet" type="checkbox" checked> Random selection</label>
  <button id="startPracticeBtn" class="primary">Start fresh set</button><button id="exitPracticeBtn" hidden>Return to question bank</button>
  <div id="practiceStatus" role="status">Question bank</div>
- </section><div id="bankList"></div></div><div id="testPage" hidden><div class="test-heading"><a href="#dashboard">&larr; Dashboard</a><span>ARITHMETIC 1 / PRACTICE</span><button id="finishPracticeBtn" class="primary">Finish &amp; review</button></div><div class="layout">
+ </section><div id="bankList"></div></div><div id="testPage" hidden><div class="test-heading"><button id="navToggleBtn" aria-controls="appNavigation" aria-expanded="false">&#9776; Menu</button><strong class="practice-title">Arithmetic 1 <span>/ Practice</span></strong><div class="compact-timer"><span>Active <strong id="practiceClock">00:00:00</strong></span><span id="timerStatus" role="status">Timer running</span><button id="pauseBtn">Pause timer</button></div><button id="jumpNavigatorBtn">Questions</button><button id="finishPracticeBtn" class="primary">Finish &amp; review</button></div><div class="layout">
   <section class="panel" id="mainPanel">
    <div class="panelhead"><div class="qtop"><strong id="qLabel">Question 1 of 123</strong><span class="tag topic" id="qTopic">Percentages</span><span class="tag" id="qType">MCQ</span></div><button id="bookmarkBtn" class="bookmark" title="Bookmark this question">☆ Bookmark</button></div>
-   <div class="timerbar"><span id="timerStatus" role="status">Timer running</span><button id="pauseBtn">Pause timer</button><button id="jumpNavigatorBtn">Question navigator</button></div><div class="question" id="questionArea"></div>
+   <div class="question" id="questionArea"></div>
    <div class="actionbar"><div class="group"><button id="prevBtn">← Previous</button><button id="nextBtn" class="primary">Next question →</button></div><div class="group"><button id="showAnswerBtn">Show answer</button><button id="resetQuestionBtn">Clear response</button></div></div>
   </section>
   <aside class="question-sidebar" aria-labelledby="navigatorTitle">
