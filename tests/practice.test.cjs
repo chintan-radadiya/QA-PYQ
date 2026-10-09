@@ -39,3 +39,34 @@ run('location.hash="#results";route();');advance(10);assert.equal(run('accumulat
 run('location.hash="#dashboard";route();location.hash="#results";route();');assert.equal(progress.hidden,false);
 run('location.hash="#revision";route();');assert.equal(progress.hidden,true);
 console.log('PASS: dashboard, topic setup preserves set, test-only timing, results, route transitions');
+
+run('testScreenActive=true;practiceIds=null;$("topicFilter").value="All";selectQuestion(1);clearResponse();');
+advance(6);run('st(1).response=0;st(1).submitted=true;archive(currentQuestion());updateClocks();');
+const historyCount=run('st(1).history.length');
+assert.equal(el('pauseBtn').disabled,true);
+assert.equal(el('practiceClock').textContent,'00:00:06');
+run('togglePause()');advance(9);assert.equal(run('st(1).seconds'),6);
+run('archive(currentQuestion());clearResponse();');
+assert.equal(run('st(1).history.length'),historyCount);
+assert.equal(run('st(1).seconds'),0);
+assert.equal(run('paused'),false);
+advance(4);run('selectQuestion(2);');assert.equal(run('st(1).history.length'),historyCount);
+run('selectQuestion(1);');assert.equal(run('st(1).seconds'),4);
+advance(3);run('st(1).response=1;st(1).submitted=true;archive(currentQuestion());saveState();loadState();');
+assert.equal(run('st(1).history.at(-1).seconds'),7);
+assert.equal(run('st(1).history.at(-1).result'),'wrong');
+assert.equal(run('st(1).history.length'),historyCount+1);
+console.log('PASS: completed timer locked, per-attempt header, retry zero, unfinished attempt resume, no duplicates, saved attempt timings');
+
+run('practiceIds=[4,6];selectQuestion(4);clearResponse();st(4).text="8";');advance(5);
+const resumeHistory=run('st(4).history.length');
+run('location.hash="#dashboard";route();');advance(30);
+run('saveState();loadState();location.hash="#test";route();');
+assert.equal(run('currentId'),4);
+assert.equal(run('st(4).text'),'8');
+assert.equal(run('st(4).seconds'),5);
+assert.equal(run('st(4).history.length'),resumeHistory);
+assert.equal(run('result(currentQuestion())'),'unanswered');
+advance(2);assert.equal(run('st(4).seconds'),7);
+assert.equal(el('palette').innerHTML.includes('status-badge skipped'),false);
+console.log('PASS: leaving and returning preserves draft, position, set and active time without an attempt/status');

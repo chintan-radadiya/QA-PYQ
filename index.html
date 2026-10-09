@@ -29,7 +29,7 @@
  <label class="shuffle-label"><input id="shuffleSet" type="checkbox" checked> Random selection</label>
  <button id="startPracticeBtn" class="primary">Start fresh set</button><button id="exitPracticeBtn" hidden>Return to question bank</button>
  <div id="practiceStatus" role="status">Question bank</div>
- </section><div id="bankList"></div></div><div id="testPage" hidden><div class="test-heading"><button id="navToggleBtn" aria-controls="appNavigation" aria-expanded="false">&#9776; Menu</button><strong class="practice-title">Arithmetic 1 <span>/ Practice</span></strong><div class="compact-timer"><span>Active <strong id="practiceClock">00:00:00</strong></span><span id="timerStatus" role="status">Timer running</span><button id="pauseBtn">Pause timer</button></div><button id="jumpNavigatorBtn">Questions</button><button id="finishPracticeBtn" class="primary">Finish &amp; review</button></div><div class="layout">
+ </section><div id="bankList"></div></div><div id="testPage" hidden><div class="test-heading"><button id="navToggleBtn" aria-controls="appNavigation" aria-expanded="false">&#9776; Menu</button><strong class="practice-title">Arithmetic 1 <span>/ Practice</span></strong><div class="compact-timer"><span>Attempt <strong id="practiceClock">00:00:00</strong></span><span id="timerStatus" role="status">Timer running</span><button id="pauseBtn">Pause timer</button></div><button id="jumpNavigatorBtn">Questions</button><button id="finishPracticeBtn" class="primary">Finish &amp; review</button></div><div class="layout">
   <section class="panel" id="mainPanel">
    <div class="panelhead"><div class="qtop"><strong id="qLabel">Question 1 of 123</strong><span class="tag topic" id="qTopic">Percentages</span><span class="tag" id="qType">MCQ</span></div><button id="bookmarkBtn" class="bookmark" title="Bookmark this question">☆ Bookmark</button></div>
    <div class="question" id="questionArea"></div>
@@ -39,9 +39,9 @@
    <div class="navigator-head"><h2 id="navigatorTitle">Questions</h2><span id="navigatorCount" class="muted"></span></div>
    <nav id="palette" class="palette" aria-label="Question navigation" tabindex="-1"></nav>
    <div class="navigator-legend" aria-label="Question status legend">
-    <span><i class="legend-current"></i>Current</span><span><i class="status-badge skipped">&#8722;</i>Skipped</span>
+    <span><i class="legend-current"></i>Current</span>
     <span><i class="status-badge correct">&#10003;</i>Correct</span><span><i class="status-badge wrong">&#215;</i>Incorrect</span>
-    <span><i class="legend-unvisited"></i>Unvisited</span><span><i class="legend-bookmark"></i>Bookmarked</span>
+    <span><i class="legend-unvisited"></i>Unanswered</span><span><i class="legend-bookmark"></i>Bookmarked</span>
     <span><i class="status-badge ungraded">&#8226;</i>Ungraded</span>
    </div>
   </aside>
