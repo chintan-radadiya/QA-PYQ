@@ -1,0 +1,92 @@
+﻿
+const $ = id => document.getElementById(id);
+/* Question dataset is loaded from questions.js */
+const STORAGE_KEY = "arithmetic1_cat_practice_v1";
+const TOPICS = ["Percentages","Profit & Loss","Simple & Compound Interest","Ratio, Proportion & Variation","Averages"];
+let testScreenActive = true;
+let paused = false, practiceIds = null, lastTick = Date.now();
+let state = {}, currentId = 1, currentEnteredAt = 0, sessionStartedAt = Date.now(), accumulatedSession = 0, bookmarkedOnly = false, visibleQuestions = [];
+function freshState(){return {response:null,text:"",bookmarked:false,seconds:0,visited:false,revealed:false,submitted:false,history:[]}}
+function loadState(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");state=saved.state||{};currentId=Number(saved.currentId)||1;accumulatedSession=Number(saved.accumulatedSession)||0;bookmarkedOnly=!!saved.bookmarkedOnly;paused=!!saved.paused;practiceIds=Array.isArray(saved.practiceIds)?saved.practiceIds.filter(id=>QUESTIONS.some(q=>q.number===id)):null;Object.values(state).forEach(s=>{s.history=s.history||[];if(s.submitted===undefined)s.submitted=s.response!==null||!!(s.text||" ").trim();});}catch(e){state={};}}
+function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({state,currentId,accumulatedSession,bookmarkedOnly,paused,practiceIds}));}catch(e){}}
+function st(id){if(!state[id])state[id]=freshState();return state[id]}
+function fmt(sec){sec=Math.max(0,Math.floor(sec));return [Math.floor(sec/3600),Math.floor(sec%3600/60),sec%60].map(n=>String(n).padStart(2,"0")).join(":")}
+function currentQuestion(){return QUESTIONS.find(q=>q.number===currentId)||QUESTIONS[0]}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function bankFiltered(){const topic=$("topicFilter").value,part=$("partFilter").value,search=$("searchBox").value.trim().toLowerCase();return QUESTIONS.filter(q=>(topic==="All"||q.topic===topic)&&(part==="All"||q.part===part)&&(!search||String(q.number).includes(search)||q.question.toLowerCase().includes(search)||q.topic.toLowerCase().includes(search))&&(!bookmarkedOnly||st(q.number).bookmarked))}
+function filtered(){return practiceIds ? practiceIds.map(id=>QUESTIONS.find(q=>q.number===id)).filter(Boolean) : bankFiltered()}
+function running(){const s=st(currentId);return testScreenActive&&!paused&&!document.hidden&&visibleQuestions.some(q=>q.number===currentId)&&!s.submitted&&!s.revealed}
+function tick(){const now=Date.now();if(running()){const elapsed=Math.max(0,(now-lastTick)/1000);st(currentId).seconds+=elapsed;accumulatedSession+=elapsed;}lastTick=now;}
+function selectQuestion(id){tick();currentId=id;st(id).visited=true;saveState();render();}
+function goToVisible(offset){const ids=visibleQuestions.map(q=>q.number);let ix=ids.indexOf(currentId);if(ix<0)ix=0;const next=ids[ix+offset];if(next!==undefined)selectQuestion(next)}
+function render(){
+ visibleQuestions=filtered();
+ if(!visibleQuestions.length){$("questionArea").innerHTML='<div class="empty">No questions match these filters. Try another topic or turn off bookmarked-only mode.</div>';$("qLabel").textContent="No questions";$("qTopic").textContent="—";$("qType").textContent="—";$("resetQuestionBtn").disabled=true;$("pauseBtn").disabled=true;$("timerStatus").textContent="No active question";$("bookmarkBtn").disabled=true;$("prevBtn").disabled=true;$("nextBtn").disabled=true;$("showAnswerBtn").disabled=true;renderSide();return}
+ let q=visibleQuestions.find(x=>x.number===currentId);
+ if(!q){q=visibleQuestions[0];currentId=q.number;st(currentId).visited=true;currentEnteredAt=Date.now();}
+ const s=st(q.number);
+ $("resetQuestionBtn").disabled=false;$("pauseBtn").disabled=false;$("bookmarkBtn").disabled=false;$("prevBtn").disabled=visibleQuestions[0].number===q.number;$("nextBtn").disabled=visibleQuestions[visibleQuestions.length-1].number===q.number;$("showAnswerBtn").disabled=!q.answerDisplay;
+ $("qLabel").textContent="Question "+q.number+" · "+(visibleQuestions.findIndex(x=>x.number===q.number)+1)+" of "+visibleQuestions.length;
+ $("qTopic").textContent=q.topic;$("qType").textContent=q.type==="MCQ"?"MCQ":"Answer entry";
+ $("topTopic").textContent=q.topic;$("bookmarkBtn").classList.toggle("active",s.bookmarked);$("bookmarkBtn").textContent=s.bookmarked?"★ Bookmarked":"☆ Bookmark";
+ let body='<div class="qmeta"><span>'+escapeHtml(q.part==="Classwork"?"Part A · Classwork":"Part B · Practice")+(q.source?' · '+escapeHtml(q.source):'')+'</span><span>Time on this question: <strong id="questionClock">'+fmt(s.seconds)+'</strong></span></div>';
+ body+='<div class="qtext">'+escapeHtml(q.question)+'</div>';
+ if(q.options&&q.options.length){body+='<div class="options">'+q.options.map((o,i)=>'<label class="option '+(s.response===i?'selected':'')+'"><input type="radio" name="response" value="'+i+'" '+(s.submitted||s.revealed?'disabled':'')+' '+(s.response===i?'checked':'')+'><span class="letter">'+String.fromCharCode(65+i)+'.</span><span>'+escapeHtml(o)+'</span></label>').join("")+'</div>';}
+ else {body+='<div class="response"><label for="textResponse">Your answer</label><input id="textResponse" type="text" '+(s.submitted||s.revealed?'disabled':'')+' placeholder="Enter your answer" value="'+escapeHtml(s.text||"")+'"></div>';}
+ if(!q.options.length&&!s.submitted&&!s.revealed)body+='<button id="submitAnswerBtn" class="primary">Submit answer</button>';
+ if(s.submitted)body+='<div class="feedback '+result(q)+'" role="status">'+({correct:'Correct answer',wrong:'Incorrect answer | add this question to your revision practice.',ungraded:'Answered | check against the answer key.'}[result(q)])+' | Timer stopped</div>';
+ if(s.history.length)body+='<details class="attempt-history"><summary>Previous attempts ('+s.history.length+')</summary>'+s.history.map(a=>'<p>'+escapeHtml(a.response!==null?q.options[a.response]:a.text)+' | '+escapeHtml(a.result)+' | '+fmt(a.seconds)+'</p>').join('')+'</details>';
+ if(s.revealed){body+='<div class="answerbox"><strong>Answer key</strong><div class="key">'+escapeHtml(displayAnswer(q))+'</div><div class="muted" style="font-size:12px;margin-top:4px">Answer shown from the handout answer key. The PDF does not provide worked solutions in this app.</div></div>'}
+ $("questionArea").innerHTML=body;
+ $("questionArea").querySelectorAll('input[name="response"]').forEach(el=>el.addEventListener("change",e=>{tick();s.response=Number(e.target.value);s.submitted=true;saveState();render();}));
+ const submit=$("submitAnswerBtn");if(submit)submit.addEventListener("click",()=>{if(!s.text.trim()){toast("Enter an answer first.");return;}tick();s.submitted=true;saveState();render();});
+ const textInput=$("textResponse");if(textInput)textInput.addEventListener("input",e=>{s.text=e.target.value;saveState();updateStatsOnly();});
+ $("resetQuestionBtn").textContent=s.submitted||s.revealed?"Retry question":"Clear response";$("showAnswerBtn").textContent=s.revealed?"Hide answer":"Show answer";
+ renderSide();updateClocks();
+}
+function displayAnswer(q){if(q.type==="MCQ"&&typeof q.answer==="number")return String.fromCharCode(65+q.answer)+(q.options[q.answer]!==undefined?". "+q.options[q.answer]:"");return q.answerDisplay||String(q.answer??"Not available")}
+function renderSide(){
+ const attempted=QUESTIONS.filter(q=>{const s=st(q.number);return s.submitted}).length;
+ const bookmarked=QUESTIONS.filter(q=>st(q.number).bookmarked).length,viewed=QUESTIONS.filter(q=>st(q.number).visited).length;
+ $("attemptedStat").textContent=attempted;$("bookmarkedStat").textContent=bookmarked;$("viewedStat").textContent=viewed;$("progressBar").style.width=(attempted/QUESTIONS.length*100)+"%";$("progressText").textContent=attempted+" of "+QUESTIONS.length+" attempted";
+ $("bookmarksOnlyBtn").textContent=bookmarkedOnly?"★ Showing bookmarked only":"☆ Show bookmarked only";
+ $("topicList").innerHTML='<button class="topicrow '+($("topicFilter").value==="All"?'active':'')+'" data-topic="All"><span>All topics</span><small>'+QUESTIONS.length+'</small></button>'+TOPICS.map(t=>'<button class="topicrow '+($("topicFilter").value===t?'active':'')+'" data-topic="'+escapeHtml(t)+'"><span>'+escapeHtml(t)+'</span><small>'+QUESTIONS.filter(q=>q.topic===t).length+'</small></button>').join("");
+ $("topicList").querySelectorAll("[data-topic]").forEach(b=>b.addEventListener("click",()=>{$("topicFilter").value=b.dataset.topic;changeFilters()}));
+ const list=visibleQuestions.length?visibleQuestions:filtered();
+ const palette=$("palette"),previousScroll=palette.scrollTop;
+ $("navigatorCount").textContent=list.length+" total";
+ palette.innerHTML=list.length?list.map(q=>{const s=st(q.number),status=s.submitted?result(q):s.visited&&q.number!==currentId?'skipped':'unvisited';const label={correct:'Correct',wrong:'Incorrect',skipped:'Skipped',unvisited:'Unvisited',ungraded:'Ungraded'}[status];const symbol={correct:'\u2713',wrong:'\u00d7',skipped:'\u2212',ungraded:'\u2022'}[status];return '<button class="pnum '+(s.bookmarked?'bookmarked ':'')+(q.number===currentId?'current':'')+'" data-id="'+q.number+'" aria-label="Question '+q.number+', '+label+(s.bookmarked?', bookmarked':'')+'" aria-current="'+(q.number===currentId?'true':'false')+'" title="Question '+q.number+' | '+label+'">'+q.number+(symbol?'<span aria-hidden="true" class="status-badge '+status+'">'+symbol+'</span>':'')+'</button>';}).join(""):'<p class="navigator-empty">No matching questions</p>';
+ palette.scrollTop=previousScroll;
+ palette.querySelectorAll("[data-id]").forEach(b=>b.addEventListener("click",()=>{selectQuestion(Number(b.dataset.id));const active=palette.querySelector('[aria-current="true"]');if(active)active.focus({preventScroll:true});}));
+ const active=palette.querySelector?.('[aria-current="true"]');
+ if(active){const top=active.offsetTop-palette.offsetTop;if(top<palette.scrollTop)palette.scrollTop=Math.max(0,top-12);else if(top+active.offsetHeight>palette.scrollTop+palette.clientHeight)palette.scrollTop=top+active.offsetHeight-palette.clientHeight+12;}
+
+}
+function selectFirstFiltered(){tick();visibleQuestions=filtered();if(visibleQuestions.length)selectQuestion(visibleQuestions[0].number);else render()}
+function updateStatsOnly(){const attempted=QUESTIONS.filter(q=>{const s=st(q.number);return s.submitted}).length;$("attemptedStat").textContent=attempted;$("progressBar").style.width=(attempted/QUESTIONS.length*100)+"%";$("progressText").textContent=attempted+" of "+QUESTIONS.length+" attempted";saveState()}
+function updateClocks(){const clock=$("questionClock");if(clock)clock.textContent=fmt(st(currentId).seconds);$("totalClock").textContent=fmt(accumulatedSession);$("sideClock").textContent=fmt(accumulatedSession);$("pauseBtn").textContent=paused?"Resume timer":"Pause timer";$("pauseBtn").setAttribute("aria-pressed",String(paused));$("timerStatus").textContent=!visibleQuestions.length?"No active question":paused?"Practice paused":st(currentId).submitted?"Answer saved | timer stopped":st(currentId).revealed?"Answer revealed | timer stopped":document.hidden?"Tab hidden | timer paused":"Timer running";}
+function toggleBookmark(){if(!visibleQuestions.length)return;tick();st(currentId).bookmarked=!st(currentId).bookmarked;saveState();render()}
+function toggleAnswer(){tick();st(currentId).revealed=!st(currentId).revealed;saveState();render()}
+function archive(q){const s=st(q.number);if(s.submitted)s.history.push({response:s.response,text:s.text,seconds:s.seconds,result:result(q),at:new Date().toISOString(),revealed:s.revealed});}
+function clearResponse(){tick();archive(currentQuestion());Object.assign(st(currentId),{response:null,text:"",submitted:false,revealed:false,seconds:0});saveState();render()}
+function exportProgress(){tick();const payload={exported_at:new Date().toISOString(),source:"Arithmetic1_PYQ_Practice.pdf",total_questions:QUESTIONS.length,session_seconds:Math.round(accumulatedSession),progress:QUESTIONS.map(q=>({number:q.number,topic:q.topic,question:q.question,response:q.options.length?(st(q.number).response===null?null:{option:String.fromCharCode(65+st(q.number).response),text:q.options[st(q.number).response]}):st(q.number).text||null,bookmarked:st(q.number).bookmarked,visited:st(q.number).visited,time_seconds:Math.round(st(q.number).seconds),answer_revealed:st(q.number).revealed,answer_key:q.answerDisplay,result:result(q),history:st(q.number).history}))};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="arithmetic1-practice-progress.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function toast(msg){$("toast").textContent=msg;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",2200)}
+function numeric(value){const t=String(value).trim().replace(/,/g,"");if(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:\s*\/\s*[+-]?(?:\d+(?:\.\d*)?|\.\d+))?$/.test(t))return null;const parts=t.split('/').map(Number);const n=parts.length===2?parts[0]/parts[1]:parts[0];return Number.isFinite(n)?n:null;}
+function result(q){const s=st(q.number);if(!s.submitted)return 'unanswered';if(q.answer===null||q.answer===undefined||q.answer==='')return 'ungraded';if(q.type==='MCQ')return s.response===q.answer?'correct':'wrong';const a=numeric(s.text),b=numeric(q.answer);return (a!==null&&b!==null?Math.abs(a-b)<1e-9:String(s.text).trim().toLowerCase()===String(q.answer).trim().toLowerCase())?'correct':'wrong';}
+function analysis(qs=filtered()){const correct=qs.filter(q=>result(q)==='correct').length,wrong=qs.filter(q=>result(q)==='wrong').length,done=qs.filter(q=>st(q.number).submitted).length;$("analysisSummary").textContent=`${correct} correct | ${wrong} wrong | ${qs.length-done} unanswered | ${correct+wrong?Math.round(correct/(correct+wrong)*100):0}% accuracy`;$("topicAnalysis").innerHTML=TOPICS.map(t=>{const rows=qs.filter(q=>q.topic===t&&st(q.number).submitted),c=rows.filter(q=>result(q)==='correct').length,g=rows.filter(q=>['correct','wrong'].includes(result(q))).length;return '<tr><td>'+escapeHtml(t)+'</td><td>'+c+' / '+g+'</td><td>'+(rows.length?fmt(rows.reduce((n,q)=>n+st(q.number).seconds,0)/rows.length):'?')+'</td></tr>'}).join('');$("practiceStatus").textContent=practiceIds?`Practice set: ${done} / ${qs.length} answered${done===qs.length?' | Complete! Review your results below.':''}`:'Question bank | Analysis reflects current filters';$("exitPracticeBtn").hidden=!practiceIds;}
+const baseRenderSide=renderSide;renderSide=function(){baseRenderSide();analysis();};
+function startSet(wrongOnly=false){tick();let pool=bankFiltered().filter(q=>{const mode=wrongOnly?'wrong':$("practicePool").value;return mode==='all'||mode==='wrong'&&result(q)==='wrong'||mode==='unanswered'&&!st(q.number).submitted||mode==='bookmarked'&&st(q.number).bookmarked;});if(!pool.length){toast('No questions match this practice pool. Adjust your filters.');return;}const count=wrongOnly?pool.length:Number($("practiceCount").value);if(!Number.isInteger(count)||count<1||count>pool.length){toast(`Choose between 1 and ${pool.length} questions.`);return;}if($("shuffleSet").checked)for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}practiceIds=pool.slice(0,count).map(q=>q.number);practiceIds.forEach(id=>{archive(QUESTIONS.find(q=>q.number===id));Object.assign(st(id),{response:null,text:'',seconds:0,submitted:false,revealed:false});});paused=false;lastTick=Date.now();currentId=practiceIds[0];st(currentId).visited=true;saveState();render();}
+$("startPracticeBtn").addEventListener('click',()=>startSet());$("reviseWrongBtn").addEventListener('click',()=>startSet(true));$("exitPracticeBtn").addEventListener('click',()=>{tick();practiceIds=null;selectFirstFiltered();saveState();});$("pauseBtn").addEventListener('click',()=>{tick();paused=!paused;saveState();updateClocks();});
+$("bookmarkBtn").addEventListener("click",toggleBookmark);$("showAnswerBtn").addEventListener("click",toggleAnswer);$("prevBtn").addEventListener("click",()=>goToVisible(-1));$("nextBtn").addEventListener("click",()=>goToVisible(1));$("resetQuestionBtn").addEventListener("click",clearResponse);
+function changeFilters(){tick();practiceIds=null;selectFirstFiltered();saveState();}
+$("topicFilter").addEventListener("change",()=>changeFilters());$("partFilter").addEventListener("change",()=>changeFilters());$("searchBox").addEventListener("input",()=>changeFilters());
+$("bookmarksOnlyBtn").addEventListener("click",()=>{tick();practiceIds=null;bookmarkedOnly=!bookmarkedOnly;selectFirstFiltered()});$("exportBtn").addEventListener("click",exportProgress);
+$("resetAllBtn").addEventListener("click",()=>$("resetModal").style.display="flex");$("cancelReset").addEventListener("click",()=>$("resetModal").style.display="none");
+$("confirmReset").addEventListener("click",()=>{state={};practiceIds=null;paused=false;lastTick=Date.now();$("topicFilter").value="All";$("partFilter").value="All";$("searchBox").value="";currentId=1;accumulatedSession=0;bookmarkedOnly=false;sessionStartedAt=Date.now();currentEnteredAt=Date.now();localStorage.removeItem(STORAGE_KEY);$("resetModal").style.display="none";render();toast("All progress reset.")});
+document.addEventListener("keydown",e=>{if(!testScreenActive||e.target.matches("input,select,textarea,button"))return;if(e.key==="ArrowRight")goToVisible(1);if(e.key==="ArrowLeft")goToVisible(-1);if(e.key.toLowerCase()==="b")toggleBookmark();if(e.key.toLowerCase()==="p")$("pauseBtn").click()});
+$("topicFilter").innerHTML = '<option value="All">All topics</option>'+TOPICS.map(t=>'<option value="'+escapeHtml(t)+'">'+escapeHtml(t)+'</option>').join("");
+loadState();if(!QUESTIONS.some(q=>q.number===currentId))currentId=1;currentEnteredAt=Date.now();st(currentId).visited=true;render();
+setInterval(()=>{tick();updateClocks();saveState()},1000);
+window.addEventListener("pagehide",()=>{tick();saveState()});
+document.addEventListener("visibilitychange",()=>{if(document.hidden){const now=Date.now();if(testScreenActive&&!paused&&visibleQuestions.length&&!st(currentId).submitted&&!st(currentId).revealed){const elapsed=Math.max(0,(now-lastTick)/1000);st(currentId).seconds+=elapsed;accumulatedSession+=elapsed;}}lastTick=Date.now();saveState();updateClocks();});
+

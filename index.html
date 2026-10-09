@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arithmetic 1 — CAT QA Practice</title>
+<link rel="stylesheet" href="css/styles.css">
+
+</head>
+<body>
+<header class="topbar"><div class="brand">Arithmetic 1 · CAT QA Practice</div><div class="topright"><span class="topchip" id="topTopic">All topics</span><span>Active time <strong id="totalClock">00:00:00</strong></span></div></header>
+<nav class="app-nav" aria-label="Main navigation"><a class="app-logo" href="#dashboard">A1 <span>Practice studio</span></a><a href="#dashboard">Dashboard</a><a href="#bank">Question bank</a><a href="#topics">Topic practice</a><a href="#random">Random practice</a><a href="#revision">Revision</a><a href="#test">Resume practice</a></nav>
+<main class="wrap">
+<section id="dashboardPage" class="app-page"></section>
+<section id="revisionPage" class="app-page" hidden></section>
+<section id="resultsPage" class="app-page" hidden></section>
+<div id="libraryPage" hidden><div class="page-heading"><span class="eyebrow">YOUR QUESTION LIBRARY</span><h1 id="pageTitle">Question bank</h1><p id="pageDescription"></p></div><div id="topicCards" class="topic-cards"></div>
+ <div class="toolbar" id="libraryFilters">
+  <div class="heading"><h1>Question practice</h1><p>123 questions from your Arithmetic 1 PYQ handout · No countdown or forced submission</p></div>
+  <div class="filters">
+   <select id="topicFilter" aria-label="Filter by topic"><option value="All">All topics</option></select>
+   <select id="partFilter" aria-label="Filter by part"><option value="All">All questions</option><option value="Classwork">Part A · Classwork (1–79)</option><option value="Practice">Part B · Practice (80–123)</option></select>
+   <input id="searchBox" type="search" placeholder="Find question…" aria-label="Search questions">
+  </div>
+ </div>
+ <section id="practiceSetup" class="panel practice-setup" aria-label="Practice setup">
+ <div><strong>Build a practice set</strong><p class="muted">Use the topic, part and search filters above, then choose your pool and size. Previous attempts stay in your history.</p></div>
+ <label>Question pool<select id="practicePool"><option value="all">All matching questions</option><option value="wrong">Wrong answers</option><option value="unanswered">Unanswered</option><option value="bookmarked">Bookmarked</option></select></label>
+ <label>Number of questions<input id="practiceCount" type="number" min="1" max="123" value="10"></label>
+ <label class="shuffle-label"><input id="shuffleSet" type="checkbox" checked> Random selection</label>
+ <button id="startPracticeBtn" class="primary">Start fresh set</button><button id="exitPracticeBtn" hidden>Return to question bank</button>
+ <div id="practiceStatus" role="status">Question bank</div>
+ </section><div id="bankList"></div></div><div id="testPage" hidden><div class="test-heading"><a href="#dashboard">&larr; Dashboard</a><span>ARITHMETIC 1 / PRACTICE</span><button id="finishPracticeBtn" class="primary">Finish &amp; review</button></div><div class="layout">
+  <section class="panel" id="mainPanel">
+   <div class="panelhead"><div class="qtop"><strong id="qLabel">Question 1 of 123</strong><span class="tag topic" id="qTopic">Percentages</span><span class="tag" id="qType">MCQ</span></div><button id="bookmarkBtn" class="bookmark" title="Bookmark this question">☆ Bookmark</button></div>
+   <div class="timerbar"><span id="timerStatus" role="status">Timer running</span><button id="pauseBtn">Pause timer</button><button id="jumpNavigatorBtn">Question navigator</button></div><div class="question" id="questionArea"></div>
+   <div class="actionbar"><div class="group"><button id="prevBtn">← Previous</button><button id="nextBtn" class="primary">Next question →</button></div><div class="group"><button id="showAnswerBtn">Show answer</button><button id="resetQuestionBtn">Clear response</button></div></div>
+  </section>
+  <aside class="question-sidebar" aria-labelledby="navigatorTitle">
+   <div class="navigator-head"><h2 id="navigatorTitle">Questions</h2><span id="navigatorCount" class="muted"></span></div>
+   <nav id="palette" class="palette" aria-label="Question navigation" tabindex="-1"></nav>
+   <div class="navigator-legend" aria-label="Question status legend">
+    <span><i class="legend-current"></i>Current</span><span><i class="status-badge skipped">&#8722;</i>Skipped</span>
+    <span><i class="status-badge correct">&#10003;</i>Correct</span><span><i class="status-badge wrong">&#215;</i>Incorrect</span>
+    <span><i class="legend-unvisited"></i>Unvisited</span><span><i class="legend-bookmark"></i>Bookmarked</span>
+    <span><i class="status-badge ungraded">&#8226;</i>Ungraded</span>
+   </div>
+  </aside>
+  <section class="panel side progress-panel" aria-label="Practice progress and analysis">
+   <h2>Practice progress</h2><div class="muted" style="font-size:13px">Your progress saves in this browser.</div>
+   <div class="stats"><div class="stat"><small>Attempted</small><strong id="attemptedStat">0</strong></div><div class="stat"><small>Bookmarked</small><strong id="bookmarkedStat">0</strong></div><div class="stat"><small>Questions viewed</small><strong id="viewedStat">0</strong></div><div class="stat"><small>Active time</small><strong id="sideClock">00:00:00</strong></div></div>
+   <div class="progress"><div id="progressBar"></div></div><div class="muted" id="progressText" style="font-size:12px">0 of 123 attempted</div>
+   <h3>Analysis</h3><div id="analysisSummary"></div><div class="analysis-scroll"><table><thead><tr><th>Topic</th><th>Correct / graded</th><th>Avg. time</th></tr></thead><tbody id="topicAnalysis"></tbody></table></div><button id="reviseWrongBtn">Revise wrong answers</button><h3 class="legacy-topics">Topics</h3><div id="topicList" class="topiclist"></div>
+   <div class="sidebuttons"><button id="bookmarksOnlyBtn">☆ Show bookmarked only</button><button id="exportBtn">Export progress JSON</button><button id="resetAllBtn">Reset all progress</button></div>
+   <div class="notice">Timers stop on answer submission, answer reveal, pause, and while this tab is hidden. Choose Retry to make another attempt. Arrow keys navigate; B bookmarks; P pauses.</div>
+  </section>
+ </div>
+</div></main>
+<div class="modalbg" id="resetModal"><div class="modal"><h2>Reset all practice progress?</h2><p>This clears saved responses, bookmarks, reveal states, and time tracking for all questions in this browser.</p><div class="modalactions"><button id="cancelReset">Cancel</button><button id="confirmReset" class="primary">Reset progress</button></div></div></div>
+<div class="toast" id="toast" role="status"></div>
+<script src="js/questions.js"></script>
+<script src="js/app.js"></script>
+<script src="js/pages.js"></script>
+</body>
+</html>
