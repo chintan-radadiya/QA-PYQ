@@ -1,0 +1,75 @@
+const assert=require('node:assert/strict'),http=require('node:http'),fs=require('node:fs'),path=require('node:path');
+let chromium;try{({chromium}=require('playwright-core'));}catch{({chromium}=require(path.join(process.env.APPDATA,'npm/node_modules/openclaw/node_modules/playwright-core')));}
+const {handler}=require('../scripts/serve.cjs');
+(async()=>{
+ const server=http.createServer(handler);await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const base=`http://127.0.0.1:${server.address().port}`;
+ const executable=process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe';
+ let browser;try{
+ browser=await chromium.launch({executablePath:executable,headless:true,args:['--disable-gpu','--no-first-run']});
+ const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage(),errors=[];
+ page.on('pageerror',error=>errors.push(error.message));
+ await page.goto(base);await page.getByRole('heading',{name:'Make understanding your advantage.'}).waitFor();
+ const artifacts=path.resolve(__dirname,'../artifacts');fs.mkdirSync(artifacts,{recursive:true});
+ await page.screenshot({path:path.join(artifacts,'dashboard-desktop.png'),fullPage:true});
+ console.log('PASS dashboard loads');
+ for(const route of ['topics','concept/0','bank','random','exams','revision','sessions','analysis','settings','about']){
+  await page.goto(base+'/#'+route);await page.waitForTimeout(80);assert(await page.locator('h1').count(),route);
+ }
+ console.log('PASS all routes render');
+ await page.goto(base+'/#random');await page.locator('#filterTopic').selectOption('Percentages');await page.locator('#setupCount').fill('2');await page.locator('#setupShuffle').uncheck();await page.getByRole('button',{name:'Start practice →',exact:true}).click();
+ await page.locator('#questionText').waitFor();assert.match(await page.locator('#questionText').innerText(),/income of Amala/);
+ await page.locator('input[name=answer]').nth(1).check();assert.equal(await page.locator('.feedback').count(),0);await page.getByRole('button',{name:'Submit answer',exact:true}).click();await page.getByText('Incorrect answer · first exposure').waitFor();
+ await page.getByRole('button',{name:'Retry question',exact:true}).click();assert(await page.evaluate(()=>engine.p('Q1').needsRevision));
+ await page.getByRole('button',{name:'Show worked solution',exact:true}).click();await page.getByRole('heading',{name:/Worked solution/}).waitFor();await page.getByRole('button',{name:'Hide solution',exact:true}).click();await page.locator('input[name=answer]').nth(0).check();await page.getByRole('button',{name:'Submit answer',exact:true}).click();assert(await page.evaluate(()=>engine.p('Q1').attempts.at(-1).assisted));
+ console.log('PASS deliberate submit, retry and sticky assistance');
+ const originalSession=await page.evaluate(()=>engine.active().id);await page.getByRole('button',{name:'← Studio',exact:true}).click();
+ await page.goto(base+'/#question/Q4');await page.getByRole('button',{name:'Practise this question',exact:true}).click();await page.locator('#textAnswer').fill('160/2');await page.waitForTimeout(500);await page.reload();await page.locator('#textAnswer').waitFor();assert.equal(await page.locator('#textAnswer').inputValue(),'160/2');await page.getByRole('button',{name:'Submit answer',exact:true}).click();await page.getByText(/Correct answer · previously seen/).waitFor();
+ assert(await page.evaluate(id=>engine.data.sessions.some(s=>s.id===id&&!s.finishedAt),originalSession));
+ console.log('PASS independent sessions and reload draft restoration');
+ await page.getByRole('button',{name:'Finish & review',exact:true}).click();await page.getByRole('button',{name:'Finish & save report',exact:true}).click();await page.getByRole('heading',{name:'Question breakdown',exact:true}).waitFor();
+ await page.goto(base+'/#exams');await page.locator('[data-action=exam-instructions][data-set=arithmetic]').click();await page.getByRole('button',{name:'Begin sectional',exact:true}).click();await page.locator('#questionText').waitFor();
+ assert.equal(await page.getByRole('button',{name:'Show worked solution',exact:true}).count(),0);assert.equal(await page.locator('#pauseBtn').count(),0);assert.equal(await page.getByText('Percentages',{exact:true}).count(),0);
+ if(await page.locator('#textAnswer').count())await page.locator('#textAnswer').fill('123');else await page.locator('input[name=answer]').nth(0).check();await page.getByRole('button',{name:'Mark for review & next',exact:true}).click();assert(await page.evaluate(()=>engine.active().responses[engine.active().ids[0]].flagged));
+ if(await page.locator('#textAnswer').count())await page.locator('#textAnswer').fill('123');else await page.locator('input[name=answer]').nth(1).check();await page.locator('.pnum').nth(2).click();assert.equal(await page.evaluate(()=>engine.active().responses[engine.active().ids[1]].saved),null);
+ if(await page.locator('#textAnswer').count())await page.locator('#textAnswer').fill('123');else await page.locator('input[name=answer]').nth(0).check();await page.getByRole('button',{name:'Save & next',exact:true}).click();
+ await page.screenshot({path:path.join(artifacts,'sectional-desktop.png'),fullPage:true});
+ await page.evaluate(()=>{engine.active().deadline=Date.now()+1000;engine.touch();saveNow();});await page.reload();await page.waitForURL(/#results\//);assert(await page.getByText(/Time expired; saved answers submitted automatically/).count());
+ console.log('PASS CAT controls, deferred feedback, review flags, unsaved drafts and expiry after reload');
+ await page.goto(base+'/#settings');const backup=await page.evaluate(()=>JSON.stringify({data:engine.data}));await page.locator('#importFile').setInputFiles({name:'backup.json',mimeType:'application/json',buffer:Buffer.from(backup)});await page.getByRole('button',{name:'Merge histories',exact:true}).click();await page.getByRole('heading',{name:'Make understanding your advantage.'}).waitFor();
+ assert.equal(await page.evaluate(()=>engine.data.reports.length),2);
+ await page.goto(base+'/#question/Q2');await page.getByRole('button',{name:'Show worked solution',exact:true}).click();await page.locator('[data-action=report-issue]').click();await page.locator('#issueText').fill('Test issue: please check the wording.');await page.getByRole('button',{name:'Save issue',exact:true}).click();assert.equal(await page.evaluate(()=>engine.data.issues.length),1);
+ console.log('PASS merge round trip and content issue workflow');
+ await page.getByText('My mistake notebook & notes',{exact:true}).click();await page.locator('#personalNote').fill('Remember to apply percentages to the right base.');await page.goto(base+'/#bank');assert.equal(await page.evaluate(()=>engine.p('Q2').notes),'Remember to apply percentages to the right base.');
+ await page.getByText('More filters',{exact:true}).click();await page.locator('#filterYear').selectOption('2024');await page.locator('#filterSlot').selectOption('3');assert(await page.evaluate(()=>filteredBank().length>0&&filteredBank().every(q=>q.source.includes('CAT 2024')&&q.source.includes('Slot 3'))));await page.getByRole('button',{name:'Clear filters',exact:true}).click();
+ await page.goto(base+'/#random');await page.locator('#filterTopic').selectOption('Percentages');assert(Number(await page.locator('#setupCount').inputValue())<=Number(await page.locator('#setupCount').getAttribute('max')));assert(await page.locator('#setupMinutes').isDisabled());await page.locator('#setupMode').selectOption('timed');assert(await page.locator('#setupMinutes').isEnabled());
+ console.log('PASS autosaved reflections, exact CAT filters and small-pool setup');
+ const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),mp=await mobile.newPage();mp.on('pageerror',error=>errors.push(error.message));await mp.goto(base);await mp.getByRole('button',{name:'Start today’s practice →',exact:true}).click();await mp.locator('#questionText').waitFor();assert(await mp.locator('#workspace').evaluate(n=>n.classList.contains('nav-hidden')));assert(await mp.locator('[data-action=submit]').isVisible());assert(await mp.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await mp.locator('#toggleNavigatorBtn').click();await mp.locator('.pnum').nth(1).click();assert(await mp.locator('#workspace').evaluate(n=>n.classList.contains('nav-hidden')));await mp.screenshot({path:path.join(artifacts,'practice-mobile.png'),fullPage:true});
+ console.log('PASS mobile layout, available actions, question drawer and no horizontal overflow');
+ await mp.evaluate(()=>{window.rootRebuilds=0;new MutationObserver(()=>window.rootRebuilds++).observe(document.getElementById('main'),{childList:true});});await mp.waitForTimeout(1200);assert.equal(await mp.evaluate(()=>window.rootRebuilds),0);
+ const timings=await page.evaluate(()=>{const values=[];for(let i=0;i<20;i++){const start=performance.now();View.bankList();values.push(performance.now()-start);}return {bankRenderMeanMs:values.reduce((a,b)=>a+b,0)/values.length,bankRenderMaxMs:Math.max(...values),domContentLoadedMs:performance.getEntriesByType('navigation')[0].domContentLoadedEventEnd};});
+ fs.writeFileSync(path.join(artifacts,'performance.json'),JSON.stringify(timings,null,2));assert(timings.bankRenderMaxMs<1000);console.log('PASS clocks avoid page rebuilds; bank render mean '+timings.bankRenderMeanMs.toFixed(2)+' ms');
+ const beforeImport=await page.evaluate(()=>engine.data.reports.length);await page.locator('#importFile').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{"version":999}')});await page.getByText(/Import rejected/).waitFor();assert.equal(await page.evaluate(()=>engine.data.reports.length),beforeImport);
+ console.log('PASS invalid import leaves existing data untouched');
+ const expiredContext=await browser.newContext(),ep=await expiredContext.newPage();await ep.goto(base);await ep.evaluate(()=>{const s=engine.start(['Q1'],'exam',{duration:60,title:'Expired offline'});engine.draft(s,0);engine.save(s);s.createdAt=Date.now()-120000;s.deadline=Date.now()-60000;engine.touch();saveNow();});await ep.goto(base+'/#test');await ep.reload();await ep.waitForURL(/#results\//);assert.equal(await ep.evaluate(()=>engine.data.reports.at(-1).score),3);await expiredContext.close();
+ console.log('PASS already-expired exam opens its report after reload');
+ const oldContext=await browser.newContext();await oldContext.addInitScript(()=>localStorage.setItem('arithmetic1_cat_practice_v1',JSON.stringify({currentId:4,practiceIds:[4],state:{4:{response:null,text:'160/2',submitted:false,seconds:8,visited:true,bookmarked:true,history:[]}}})));const op=await oldContext.newPage();await op.goto(base+'/#test');await op.locator('#textAnswer').waitFor();assert.equal(await op.locator('#textAnswer').inputValue(),'160/2');assert(await op.evaluate(()=>engine.p('Q4').bookmarked));await oldContext.close();
+ console.log('PASS actual-browser legacy migration');
+ const failContext=await browser.newContext();await failContext.addInitScript(()=>{Storage.prototype.setItem=function(){throw new DOMException('Quota exhausted','QuotaExceededError');};});const fp=await failContext.newPage();await fp.goto(base);await fp.locator('#storageWarning').waitFor();assert.match(await fp.locator('#storageWarning').innerText(),/could not save/);const downloaded=fp.waitForEvent('download');await fp.locator('#storageWarning [data-action=export]').click();await downloaded;await failContext.close();
+ console.log('PASS storage failure is visible and backup remains available');
+ const fileContext=await browser.newContext(),filePage=await fileContext.newPage();filePage.on('pageerror',error=>errors.push(error.message));await filePage.goto(require('node:url').pathToFileURL(path.resolve(__dirname,'../index.html')).href);await filePage.getByRole('heading',{name:'Make understanding your advantage.'}).waitFor();await filePage.goto(require('node:url').pathToFileURL(path.resolve(__dirname,'../index.html')).href+'#random');await filePage.locator('#setupCount').fill('1');await filePage.getByRole('button',{name:'Start practice →',exact:true}).click();await filePage.locator('#questionText').waitFor();await fileContext.close();
+ console.log('PASS direct file opening and practice without a server');
+ await page.evaluate(()=>saveNow());const second=await context.newPage();await second.goto(base);await second.getByRole('button',{name:'Start today’s practice →',exact:true}).click();await page.locator('#storageWarning').waitFor();assert.match(await page.locator('#storageWarning').innerText(),/another tab/);await second.close();
+ console.log('PASS multiple-tab write protection');
+ const pyqContext=await browser.newContext(),pp=await pyqContext.newPage();pp.on('pageerror',error=>errors.push(error.message));await pp.goto(base);
+ assert.deepEqual(await pp.evaluate(()=>[BANK.length,CONCEPTS.length,BANK.every(q=>q.kind==='handout')]),[123,5,true]);
+ await pp.locator('[data-action=diagnostic]').click();await pp.locator('[data-action=start-diagnostic]').click();await pp.locator('#questionText').waitFor();
+ assert(await pp.evaluate(()=>engine.active().ids.length===5&&engine.active().duration===600&&engine.active().ids.every(id=>/^Q\d+$/.test(id))));
+ await pp.evaluate(()=>{const retired={...BANK.find(q=>q.id==='Q4'),id:'O1-1'};const old=new CatCore.Engine([...BANK,retired]);const s=old.start(['Q4','O1-1'],'learn');old.draft(s,'160/2');old.p('O1-1').bookmarked=true;storageBlocked=true;localStorage.setItem(STORAGE_KEY,JSON.stringify({data:old.data}));});
+ await pp.reload();await pp.locator('#textAnswer').waitFor({timeout:3000});assert.equal(await pp.locator('#textAnswer').inputValue(),'160/2');
+ assert(await pp.evaluate(()=>engine.active().ids.length===1&&!engine.data.progress['O1-1']&&!JSON.parse(localStorage.getItem(STORAGE_KEY)).data.progress['O1-1']));
+ await pyqContext.close();console.log('PASS PYQ-only diagnostic and persisted removal of retired questions');
+ assert.deepEqual(errors,[]);console.log('PASS no JavaScript page errors');
+ await mobile.close();await context.close();
+ }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
+})().catch(error=>{console.error(error);process.exitCode=1;});

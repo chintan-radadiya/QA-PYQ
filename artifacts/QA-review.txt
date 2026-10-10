@@ -1,0 +1,19 @@
+CAT Quant Studio - PYQ-only update
+
+The question bank contains only the 123 questions from the supplied
+Arithmetic 1 handout, covering five topics. All 125 added questions and
+both authored sectional sets have been removed from the source.
+
+The diagnostic selects five handout PYQs, one per topic. The timed module
+selects 22 handout PYQs (14 MCQ, 8 TITA). It is an Arithmetic 1 practice
+module, not an intact official CAT section or a full-syllabus mock.
+
+Worked solutions, hints, notes, revision, reports and performance improvements
+remain available. Old progress/backups retain PYQ history and drafts while
+retired-question entries are removed. Mixed reports are labelled PYQs retained
+and scored only on the retained PYQs. Source backups are not modified by import.
+
+Verification: 17 engine/content suites pass, including mixed-history migration,
+plus independent checks of all 123 handout answer keys. Chrome desktop/mobile
+journeys cover navigation, practice, exam saving/expiry, imports, legacy progress,
+storage failures, competing tabs, offline opening and JavaScript page errors.

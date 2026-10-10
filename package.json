@@ -1,0 +1,8 @@
+{
+  "name": "cat-quant-studio",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Local-first CAT QA learning and sectional practice",
+  "scripts": { "start": "node scripts/serve.cjs", "test": "node tests/practice.test.cjs && node tests/content.test.cjs", "test:browser": "node tests/browser.test.cjs" },
+  "devDependencies": { "playwright-core": "1.60.0" }
+}
